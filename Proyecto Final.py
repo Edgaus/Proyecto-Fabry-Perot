@@ -1,3 +1,11 @@
+
+# Este programa soluciona un sistema de un par ecuaciones diferenciales a partir del algoritmo de Rungge-Kutta para el modelo de un laser.
+# El programa consiste de un ciclo que obtiene los distintos valores de N y S para un valor en particular de corriente, I, en busqueda de Ith, la 
+# corriente umbral. Este se obtendra a partir de una interpolacion lineal de los valores de S contra I, ya que la teoria dice que debe comportarse de forma lineal.
+# Se evaluara de valor I inicial de 0.1 hasta 20mA, en un ciclo de 200 iteraciones, y el valor de I aumentara de manera constante  
+
+
+
 import numpy as np
 import math 
 from matplotlib import pyplot as plt
@@ -64,7 +72,7 @@ tmp=tmp*1000.0*volume/ngroup
 lightout=tmp*(1.0-mirrone)/(2.0-mirrone-mirrtwo)
 
 L=np.zeros(200)   #Vector que tiene como elemenetos los distintos valores de la luz
-N=np.zeros(200)   #vector que tiene como elementos los distintos valores de los cargadores
+N=np.zeros(200)   #vector que tiene como elementos los distintos valores de los portadores
 
 def G(x1,x2):
     return gammacons*gslope*(x1-n0density)*(1-epsi*x2) #Funcion de la ganacia optica
@@ -89,12 +97,12 @@ def integrate(I,t,h,tol):
     b40 = 19372/6561; b41 = -25360/2187; b42 = 64448/6561; b43 = -212/729
     b50 = 9017/3168; b51 =-355/33; b52 = 46732/5247; b53 = 49/176; b54 = -5103/18656
     b60 = 35/384; b62 = 500/1113; b63 = 125/192; b64 = -2187/6784; b65 = 11/84         #Coeficientes para el Ruge-Kutta adaptativo
-    T=[]
-    In=[]
-    Current=[]
-    Photon=[]
-    Carrier=[]
-    Current.append(C(t))
+    T=[] #Vector que tiene los valores del tiempo
+    In=[]  
+    Current=[]  #Vector que contiene la corriente
+    Photon=[] #Vector que contiene la densidad 
+    Carrier=[] #Vector que contiene los portadores
+    Current.append(C(t)) 
     Carrier.append(I[0]*1.0e21/1.0e18)
     Photon.append((lightout*I[1]))
     T.append(t)
@@ -113,7 +121,7 @@ def integrate(I,t,h,tol):
         e = math.sqrt(np.sum(E**2)/len(y))
         return dy, e,k6
 
-# Accept integration step if error e is within tolerance
+# Acepta integracion del error
     while True:
         cont+=1
         if 4<=time:
@@ -134,12 +142,12 @@ def integrate(I,t,h,tol):
             Photon.append(photon)
             T.append(t)
             In.append(I)
-            if abs ((Photon[cont]-Photon[cont-1])*1.0e8)<1.0e-5:
+            if abs ((Photon[cont]-Photon[cont-1])*1.0e8)<1.0e-5: #Condicion de estabilidad
                 time=time+h
             else:
                 time=0
             if abs(hNext) > 10.0*abs(h): hNext = 10.0*h
-# Check if next step is the last one; if so, adjust h
+# Checar si el siguiente paso es el ultimo; ajusta h
             k0 = mk6*hNext/h 
         else:
             if abs(hNext) < 0.1*abs(h): 
@@ -148,7 +156,7 @@ def integrate(I,t,h,tol):
         h = hNext
     
     return T,Current, Carrier,Photon
-
+# Ciclo donde se va evaluando los posibles valores de I
 for p in range(200):
     rion1[p]=(p+1)*.1
     rion2[p]=(p+1)*.1
@@ -161,12 +169,14 @@ for p in range(200):
         return curr
     t=0.0
     h=1.0e-3
-    I=[ndensity,sdensity]
-    T,Cu,Ca,Ph=integrate(I,t,h,1.0e-3)
+    I=[ndensity,sdensity]  #Vector con condiciones iniciales
+    T,Cu,Ca,Ph=integrate(I,t,h,1.0e-3)  #Se llama la funcion Rugge Kuta con los valores 
     lenm=len(Ph)
     N[p]=Ca[lenm-1]
     L[p]=Ph[lenm-1]
 
+#  Interpolacion lineal para obtener el valor de Ith, formamos una recta con los valores de    
+   
 y=np.zeros(100)
 x=np.zeros(100)
 Llog=np.zeros(200)
@@ -190,7 +200,7 @@ b = (sumxy - xm*sumy)/(sumx2 - n*xm**2)
 print("El valor de Ith es:")
 print("I=",round(-a/b,4))
 
-
+# Grafica de la funcion de los vectores de Corriente, Portadores, Densidad de Fotones, 
 
 plt.plot(T,Cu,color="blue")
 plt.xlabel("Tiempo (ns)")
