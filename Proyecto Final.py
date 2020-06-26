@@ -1,25 +1,22 @@
-
 # Este programa soluciona un sistema de un par ecuaciones diferenciales a partir del algoritmo de Rungge-Kutta para el modelo de un laser.
 # El programa consiste de un ciclo que obtiene los distintos valores de N y S para un valor en particular de corriente, I, en busqueda de Ith, la 
 # corriente umbral. Este se obtendra a partir de una interpolacion lineal de los valores de S contra I, ya que la teoria dice que debe comportarse de forma lineal.
 # Se evaluara de valor I inicial de 0.1 hasta 20mA, en un ciclo de 200 iteraciones, y el valor de I aumentara de manera constante  
 
-
-
+# Bibliotecas que se utlizaron
 import numpy as np
 import math 
 from matplotlib import pyplot as plt
 
-#Asignado valores a los parametros
+#Definiendo los parametros a utlizar
 hconstjs=6.626069e-34 #Constante de Planck (J s)
 echargec=1.60217646e-19 #Carga de Electron (C)
 vlightcm=2.99792458e10 #Velocidad de la luz (cm s-1)
 
-ngroup=4 #Indice de Reflexion
+ngroup=4 #Indice de Reflexion del material
 clength=3.00E-02  #Longitud de la cavidad (cm)
 thick=1.40E-05 #Grosor de la region activa (cm)
 width=8.00E-05  #Anchura de la region activa (cm)
-tincrement=1.00E-12 #Incremento del tiempo (s)
 initialn=0.00E+18 #Valor inicial de los cargadores (cm-3)
 
 Anr=2.00E+08  #Coeficiente cambio de recombinacion no-radiactivo (s-1)
@@ -36,19 +33,17 @@ mirrtwo=0.32 #Indice de reflecion optico del segundo espejo
 alfai=40 #Perdida de optica interna(cm-1)
 pstart1=2.5 #Tiempo de primera corriente  (ns)
 pstart2=3.5 #Tiempo de la segunda corriente (ns)
-rioff1=0 #Valor de la corriente (mA)
-rion1=np.zeros(200)#Vector con los posibles valores de la corriente (mA)
-rion2=np.zeros(200) #Segunda (mA)
+rioff1=0 #Valor de la corriente (mA) cuando t<=5ns
+rion1=np.zeros(200) #Vector con los posibles valores de la corriente (mA) cuando t=5ns
+rion2=np.zeros(200) #Vector con los posibles valores de la corriente (mA) cuando t>5ns
 
-#Inicializacion densidad S, densidad N y calculo de peridida optica total (ecuacion "23" ) (cm-1)
-sdensity=0.0
-ndensity=initialn * 1.0e-21
+# Calculo de peridida optica total  (cm-1)
 alfam=math.log( 1.0/(mirrone * mirrtwo))/(2.0 * clength )
 alfasum=alfam + alfai
-#Reescalar valores : time[ns], current[mA], length[nm] and 1nm3=1e-21cm3
+
+#Reescalar valores : corriente[mA], longitud [nm] and 1nm^3=1e-21cm^3
 echarge=echargec*1.0e9*1.0e3 #Carga de electron
 vlight=vlightcm/1.0e9/1.0e-7 #Velocidad de la luz (m/s) to (nm s-1)
-tincrement=tincrement*1.0e9
 gslope=gslope*1.0e14
 n0density=n0density*1.0e-21
 #Escala de longitud en nm.
@@ -71,15 +66,14 @@ tmp=tmp*alfam*vlightcm
 tmp=tmp*1000.0*volume/ngroup
 lightout=tmp*(1.0-mirrone)/(2.0-mirrone-mirrtwo)
 
-L=np.zeros(200)   #Vector que tiene como elemenetos los distintos valores de la luz
-N=np.zeros(200)   #vector que tiene como elementos los distintos valores de los portadores
-
+# Funcion de la ganacia optica del materail
 def G(x1,x2):
-    return gammacons*gslope*(x1-n0density)*(1-epsi*x2) #Funcion de la ganacia optica
+    return gammacons*gslope*(x1-n0density)*(1-epsi*x2) 
 
+# Funcion que contiene las ecuaciones diferenciales acopladas a resolver.
 def F(x,y):
     V=np.zeros(2)
-    V[0]=C(x)/(echarge*volume)-(Anr*y[0]+Bcons*y[0]**2+Ccons*y[0]**3)-G(y[0],y[1])*y[1]  #Funcion que da un vector que tiene como elementos las dos ecuaciones diferencilaes a resolver
+    V[0]=C(x)/(echarge*volume)-(Anr*y[0]+Bcons*y[0]**2+Ccons*y[0]**3)-G(y[0],y[1])*y[1] 
     V[1]=(G(y[0],y[1])-kappa)*y[1]+beta*Bcons*y[0]**2
     return V
 
@@ -97,16 +91,16 @@ def integrate(I,t,h,tol):
     b40 = 19372/6561; b41 = -25360/2187; b42 = 64448/6561; b43 = -212/729
     b50 = 9017/3168; b51 =-355/33; b52 = 46732/5247; b53 = 49/176; b54 = -5103/18656
     b60 = 35/384; b62 = 500/1113; b63 = 125/192; b64 = -2187/6784; b65 = 11/84         #Coeficientes para el Ruge-Kutta adaptativo
-    T=[] #Vector que tiene los valores del tiempo
-    In=[]  
-    Current=[]  #Vector que contiene la corriente
-    Photon=[] #Vector que contiene la densidad 
-    Carrier=[] #Vector que contiene los portadores
-    Current.append(C(t)) 
-    Carrier.append(I[0]*1.0e21/1.0e18)
-    Photon.append((lightout*I[1]))
-    T.append(t)
-    In.append(I)
+    Tiempo=[] #Vector que tiene los valores del tiempo
+    SNiniciales=[]  #Vector 
+    Corriente=[]  #Vector que contiene la corriente
+    Fotones=[] #Vector que contiene la densidad 
+    Portadores=[] #Vector que contiene los portadores
+    Corriente.append(C(t)) 
+    Portadores.append(I[0]*1.0e21/1.0e18)
+    Fotones.append((lightout*I[1]))
+    Tiempo.append(t)
+    SNiniciales.append(I)
     k0 =h*F(t,I)
     def kutta(F,x,y,h,k0):
         k1 = h*F(x + a1*h, y + b10*k0)
@@ -132,17 +126,17 @@ def integrate(I,t,h,tol):
         else:
             hNext = 0.9*h*(tol/me)**0.2
         if me <= tol:
-            current=C(t)
-            photon=(lightout*I[1])
-            carrier=I[0]*1.0e21/1.0e18
+            corr=C(t)
+            foton=(lightout*I[1])
+            porta=I[0]*1.0e21/1.0e18
             t=t+h
             I=I+mI
-            Current.append(current)
-            Carrier.append(carrier)
-            Photon.append(photon)
-            T.append(t)
-            In.append(I)
-            if abs ((Photon[cont]-Photon[cont-1])*1.0e8)<1.0e-5: #Condicion de estabilidad
+            Corriente.append(corr)
+            Portadores.append(porta)
+            Fotones.append(foton)
+            Tiempo.append(t)
+            SNiniciales.append(I)
+            if abs ((Fotones[cont]-Fotones[cont-1])*1.0e8)<1.0e-5: #Condicion de estabilidad para encontar S y N
                 time=time+h
             else:
                 time=0
@@ -155,9 +149,16 @@ def integrate(I,t,h,tol):
             k0 = k0*hNext/h
         h = hNext
     
-    return T,Current, Carrier,Photon
+    return Tiempo,Corriente, Portadores,Fotones
+
+PotenciasL=np.zeros(200)   #Vecto con elementos ceros que luego se le va asignar los valores de la potenica de la Luz en funcion de la corriente
+Pota=np.zeros(200)   #Vector que elementos ceros que luego se le va asignar los valores de los portadores en funcion de la corriente
+
+#Inicializacion densidad S(Fotones), densidad N(Portadores)
+sdensity=0.0
+ndensity=initialn * 1.0e-21
 # Ciclo donde se va evaluando los posibles valores de I
-for p in range(200):
+for p in range(200  ):
     rion1[p]=(p+1)*.1
     rion2[p]=(p+1)*.1
     def C(a):
@@ -170,22 +171,57 @@ for p in range(200):
     t=0.0
     h=1.0e-3
     I=[ndensity,sdensity]  #Vector con condiciones iniciales
-    T,Cu,Ca,Ph=integrate(I,t,h,1.0e-3)  #Se llama la funcion Rugge Kuta con los valores 
-    lenm=len(Ph)
-    N[p]=Ca[lenm-1]
-    L[p]=Ph[lenm-1]
+    tiempo,corriente,portadores,PotenL=integrate(I,t,h,1.0e-3)  #Se llama la funcion Rugge Kuta con los valores 
+    lenm=len(PotenL)
+    Pota[p]=portadores[lenm-1]
+    PotenciasL[p]=PotenL[lenm-1]
 
-#  Interpolacion lineal para obtener el valor de Ith, formamos una recta con los valores de    
-   
+
+# Crea un vector con el logaritmo natural de los elementos del vector PotenciasL,que representa la potencia de la Luz
+logPotencias=np.zeros(200) 
+for j in range(200):
+    logPotencias[j]=math.log(PotenciasL[j])
+
+# Grafica de la funcion de los vectores de Corriente, Portadores, Densidad de Fotones, 
+
+plt.plot(tiempo,corriente,color="blue")
+plt.xlabel("Tiempo (ns)")
+plt.ylabel("Corriente (mA)")
+plt.show()
+
+plt.plot(tiempo,portadores,color="red")
+plt.xlabel("Tiempo (ns)")
+plt.ylabel("Densidad de Portadores, N(10e18 cm-3)")
+plt.show()
+
+plt.plot(tiempo,PotenL,color="green")
+plt.xlabel("Tiempo (ns)")
+plt.ylabel("Potencia Optica L (mW)")
+plt.show()
+
+plt.plot(rion1,PotenciasL,color="blue")
+plt.xlabel("Corriente (mA)")
+plt.ylabel("Potencia Optica L (mW)")
+plt.show()
+
+plt.plot(rion1,logPotencias,color="blue")
+plt.xlabel("Corriente (mA)")
+plt.ylabel("ln (Potencia Optica L (mW)")
+plt.show()
+
+plt.plot(rion1,Pota,color="blue")
+plt.xlabel("Corriente (mA)")
+plt.ylabel("Densidad Portadores, N(10e18 cm-3)")
+plt.show()
+
+#Interpolacion lineal para calcular la corriente umbral
 y=np.zeros(100)
 x=np.zeros(100)
-Llog=np.zeros(200)
+n=len(x)
 for i in range(100):
     x[i]=10+(i+1)*.1
-    y[i]=L[100+i]
-for j in range(200):
-    Llog[j]=math.log(L[j])
-n = len(x)
+    y[i]=PotenL[100+i]
+
 sumx = sumx2 = sumxy = sumy = 0
 for i in range(n):
     sumx += x[i]
@@ -197,43 +233,5 @@ ym = sumy / n
 a = (ym*sumx2 - xm*sumxy)/(sumx2 - n*xm**2)
 b = (sumxy - xm*sumy)/(sumx2 - n*xm**2)
 
-print("El valor de Ith es:")
+print("El valor de Ith es:") #Imprime el valor de la intensidad umbral
 print("I=",round(-a/b,4))
-
-# Grafica de la funcion de los vectores de Corriente, Portadores, Densidad de Fotones, 
-
-plt.plot(T,Cu,color="blue")
-plt.xlabel("Tiempo (ns)")
-plt.ylabel("Corriente (mA)")
-plt.show()
-
-plt.plot(T,Ca,color="red")
-plt.xlabel("Tiempo (ns)")
-plt.ylabel("Potencia Optica L (mW/facet)")
-plt.show()
-
-plt.plot(T,Ph,color="green")
-plt.xlabel("Densidad Carrier, n(10e18 cm-3)")
-plt.ylabel("Potencia Optica L (mW/facet)")
-plt.show()
-
-
-plt.plot(Ca,Ph,color="yellow")
-plt.xlabel("Tiempo (ns)")
-plt.ylabel("Densidad Carrier, n(10e18 cm-3)")
-plt.show()
-
-plt.plot(rion1,L,color="blue")
-plt.xlabel("Corriente (mA)")
-plt.ylabel("Luz, L")
-plt.show()
-
-plt.plot(rion1,Llog,color="blue")
-plt.xlabel("Corriente (mA)")
-plt.ylabel("Luz, log(L)")
-plt.show()
-
-plt.plot(rion1,N,color="blue")
-plt.xlabel("Corriente (mA)")
-plt.ylabel("Densidad Carrier, n(10e18 cm-3)")
-plt.show()
