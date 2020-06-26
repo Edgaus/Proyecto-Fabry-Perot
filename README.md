@@ -14,5 +14,5 @@ Graficamos los datos obtenidos en las líneas (188-216), las tres primeras grafi
 En la figura 4 que se gráfica
 ![Figure_1](https://user-images.githubusercontent.com/66283015/85876855-8c4aa880-b793-11ea-9eb1-952b2dd620ce.png)
 
-se observa un comportamiento lineal de la luz contra la corriente, así que finalmente en las líneas 218-238 realizamos una interpolación lineal para conocer el valor de I para que L sea igual a 0 y así encontrar Ith..
+se observa un comportamiento lineal de la luz contra la corriente, así que finalmente en las líneas (218-238) realizamos una interpolación lineal para conocer el valor de la corriente para que la potencia de la luz sea igual a 0 y así encontrar Ith.
 
