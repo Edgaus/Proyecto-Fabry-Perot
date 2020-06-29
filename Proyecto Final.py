@@ -184,45 +184,50 @@ for j in range(200):
 
 # Grafica de la funcion de los vectores de Corriente, Portadores, Densidad de Fotones, 
 
+# Funcion Tiempo-Corriente
 plt.plot(tiempo,corriente,color="blue")
 plt.xlabel("Tiempo (ns)")
 plt.ylabel("Corriente (mA)")
 plt.show()
-
+# Funcion Tiempo-Densidad de Portadores
 plt.plot(tiempo,portadores,color="red")
 plt.xlabel("Tiempo (ns)")
 plt.ylabel("Densidad de Portadores, N(10e18 cm-3)")
 plt.show()
-
+# Funcion Tiempo-Potencia Optica
 plt.plot(tiempo,PotenL,color="green")
 plt.xlabel("Tiempo (ns)")
 plt.ylabel("Potencia Optica L (mW)")
 plt.show()
-
+# Funcion corriente-potencia optica
 plt.plot(rion1,PotenciasL,color="blue")
 plt.xlabel("Corriente (mA)")
 plt.ylabel("Potencia Optica L (mW)")
 plt.show()
-
+# Funcion corriente-log(potencia optica)
 plt.plot(rion1,logPotencias,color="blue")
 plt.xlabel("Corriente (mA)")
 plt.ylabel("ln (Potencia Optica L (mW)")
 plt.show()
-
+# Funcion corriente-densidad de portadores
 plt.plot(rion1,Pota,color="blue")
 plt.xlabel("Corriente (mA)")
 plt.ylabel("Densidad Portadores, N(10e18 cm-3)")
 plt.show()
 
 #Interpolacion lineal para calcular la corriente umbral
-y=np.zeros(100)
-x=np.zeros(100)
-n=len(x)
+y=np.zeros(100) #Vector con ceros para luego asignar
+x=np.zeros(100) #Vector con ceros para luego asignar
+n=len(x)  #Longitud del vector
 for i in range(100):
-    x[i]=10+(i+1)*.1
-    y[i]=PotenciasL[100+i]
+    x[i]=10+(i+1)*.1 #Asignado al vector x los valores de la corriente  donde los datos se comportan de forma lineal
+    y[i]=PotenciasL[100+i] #Asigna al vector y valores del vector PotenciasL donde los datos se comportan de forma lineal
 
-sumx = sumx2 = sumxy = sumy = 0
+#Tenemos que en la interpolacion lineal se busca una solucion de la forma y=a+bx
+# Suponiendo que hay un conjuto de N puntos (xi,yi), tiene que a=(ym*sumx2 - xm*sumxy)/(sumx2 - n*xm**2) y 
+# b = (sumxy - xm*sumy)/(sumx2 - n*xm**2), donde ym,xm son los promedios de las abcisas y ordenadas respectivamente, sum es 
+# una sumatoria de los N puntos, xi al cuadrado,sumx2, producto xi*yi,sumxy, o la suma de yi,sumy.
+sumx = sumx2 = sumxy = sumy = 0 
 for i in range(n):
     sumx += x[i]
     sumx2 += x[i]**2
@@ -233,5 +238,5 @@ ym = sumy / n
 a = (ym*sumx2 - xm*sumxy)/(sumx2 - n*xm**2)
 b = (sumxy - xm*sumy)/(sumx2 - n*xm**2)
 
-print("El valor de Ith es:") #Imprime el valor de la intensidad umbral
+print("El valor de Ith es:") #Imprime el valor de la intensidad umbral, esto ocurre en y=0, se buca x que cumple esa condicion
 print("I=",round(-a/b,4))
