@@ -66,7 +66,7 @@ tmp=tmp*alfam*vlightcm
 tmp=tmp*1000.0*volume/ngroup
 lightout=tmp*(1.0-mirrone)/(2.0-mirrone-mirrtwo)
 
-# Funcion de la ganacia optica del materail
+# Funcion de la ganacia optica del material
 def G(x1,x2):
     return gammacons*gslope*(x1-n0density)*(1-epsi*x2) 
 
@@ -92,7 +92,7 @@ def integrate(I,t,h,tol):
     b50 = 9017/3168; b51 =-355/33; b52 = 46732/5247; b53 = 49/176; b54 = -5103/18656
     b60 = 35/384; b62 = 500/1113; b63 = 125/192; b64 = -2187/6784; b65 = 11/84         #Coeficientes para el Ruge-Kutta adaptativo
     Tiempo=[] #Vector que tiene los valores del tiempo
-    SNiniciales=[]  #Vector 
+    SNiniciales=[]  #Vector que contiene al arreglo I, la densidad de los fotones y portadores
     Corriente=[]  #Vector que contiene la corriente
     Fotones=[] #Vector que contiene la densidad 
     Portadores=[] #Vector que contiene los portadores
@@ -110,28 +110,28 @@ def integrate(I,t,h,tol):
         k5 = h*F(x + a5*h, y + b50*k0 + b51*k1 + b52*k2 + b53*k3 + b54*k4)
         k6 = h*F(x + a6*h, y + b60*k0 + b62*k2 + b63*k3 + b64*k4 + b65*k5)
 
-        dy = c0*k0 + c2*k2 + c3*k3 + c4*k4 + c5*k5
+        dy = c0*k0 + c2*k2 + c3*k3 + c4*k4 + c5*k5 
         E = (c0 - d0)*k0 + (c2 - d2)*k2 + (c3 - d3)*k3 + (c4 - d4)*k4 + (c5 - d5)*k5 - d6*k6
-        e = math.sqrt(np.sum(E**2)/len(y))
+        e = math.sqrt(np.sum(E**2)/len(y))  
         return dy, e,k6
 
 # Acepta integracion del error
-    while True:
+    while True:  #Ciclo que se va estar repitiendo para obtener los valores 
         cont+=1
-        if 4<=time:
+        if 4<=time: #Condicion para romper el ciclo debido al tiempo
             break
-        mI,me,mk6=kutta(F,t,I,h,k0)
-        if me<1.0e-8:
+        mI,me,mk6=kutta(F,t,I,h,k0) 
+        if me<1.0e-8: 
             hNext=h
         else:
             hNext = 0.9*h*(tol/me)**0.2
-        if me <= tol:
-            corr=C(t)
-            foton=(lightout*I[1])
+        if me <= tol:  #Condicion para aceptar valores
+            corr=C(t)   #Obtiene el valor de la corriente en funcion del tiempo en la funcion definida en la  linea 164
+            foton=(lightout*I[1])  #Tranforma la densidad de fotones a potencia 
             porta=I[0]*1.0e21/1.0e18
-            t=t+h
-            I=I+mI
-            Corriente.append(corr)
+            t=t+h #Incremnto del tiempo
+            I=I+mI #Incremento de los valores de las densidades de fotones y portadores
+            Corriente.append(corr) 
             Portadores.append(porta)
             Fotones.append(foton)
             Tiempo.append(t)
@@ -151,30 +151,30 @@ def integrate(I,t,h,tol):
     
     return Tiempo,Corriente, Portadores,Fotones
 
-PotenciasL=np.zeros(200)   #Vecto con elementos ceros que luego se le va asignar los valores de la potenica de la Luz en funcion de la corriente
+PotenciasL=np.zeros(200)   #Vector con elementos ceros que luego se le va asignar los valores de la potenica de la Luz en funcion de la corriente
 Pota=np.zeros(200)   #Vector que elementos ceros que luego se le va asignar los valores de los portadores en funcion de la corriente
 
 #Inicializacion densidad S(Fotones), densidad N(Portadores)
 sdensity=0.0
 ndensity=initialn * 1.0e-21
 # Ciclo donde se va evaluando los posibles valores de I
-for p in range(200  ):
-    rion1[p]=(p+1)*.1
-    rion2[p]=(p+1)*.1
-    def C(a):
+for p in range(200):
+    rion1[p]=(p+1)*.1  #El valor de la corriente para t=5ns
+    rion2[p]=(p+1)*.1  #El valor de la corriente para t>5ns
+    def C(a):   #Funcion de la corriente en funcion del tiempo,a.
         curr= rioff1
         if a>pstart1:
             curr=rion1[p]
         if a>pstart2:
             curr=rion2[p]
         return curr
-    t=0.0
-    h=1.0e-3
+    t=0.0  #Tiempo inicial
+    h=1.0e-3 #Incremento del paso de Ruge-Kutta, el valor dado de h es debido a las dimensiones de las escalas.
     I=[ndensity,sdensity]  #Vector con condiciones iniciales
     tiempo,corriente,portadores,PotenL=integrate(I,t,h,1.0e-3)  #Se llama la funcion Rugge Kuta con los valores 
     lenm=len(PotenL)
-    Pota[p]=portadores[lenm-1]
-    PotenciasL[p]=PotenL[lenm-1]
+    Pota[p]=portadores[lenm-1]  #Asignacion de las entradas del vector Pota para cada corriente
+    PotenciasL[p]=PotenL[lenm-1] #Asignacion de las entradas del vector PotenciasL para cada corriente
 
 
 # Crea un vector con el logaritmo natural de los elementos del vector PotenciasL,que representa la potencia de la Luz
@@ -220,7 +220,7 @@ x=np.zeros(100)
 n=len(x)
 for i in range(100):
     x[i]=10+(i+1)*.1
-    y[i]=PotenL[100+i]
+    y[i]=PotenciasL[100+i]
 
 sumx = sumx2 = sumxy = sumy = 0
 for i in range(n):
